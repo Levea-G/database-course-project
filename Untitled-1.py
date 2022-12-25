@@ -302,12 +302,12 @@ class marketpage():
             def pro():
                 ct=comt.get('active').split()[2]
                 if(ct=='赞同'):return
-                cur.execute('update Comments set agree=%s',str(int(ct)+1))
+                cur.execute('update Comments set agree=%s where account=%s and goodsNo=%s',(str(int(ct)+1),perinfo[0],gn))
                 tradeinfo.commit()
             def con():
                 ct=comt.get('active').split()[3]
                 if(ct=='异议'):return
-                cur.execute('update Comments set disagree=%s',str(int(ct)+1))
+                cur.execute('update Comments set disagree=%s where account=%s and goodsNo=%s',(str(int(ct)+1),perinfo[0],gn))
                 tradeinfo.commit()
             gn=goods.get('active').split()[0]
             if(gn=='物品编号'):return
@@ -463,7 +463,7 @@ class purchasemanage():
             tk.Label(main,font=('times',12),anchor='w',text='物流状态  '+slct[3].rstrip().encode('latin1').decode('gbk')).place(x=50,y=120,width=300,height=30)
         def comment():
             def upd():
-                cur.execute('update Comments set commentContent=%s,commentDate=%s',(tem.get(1.0,'end'),str(date.date.today())))
+                cur.execute('update Comments set commentContent=%s,commentDate=%s where account=%s and goodsNo=%s',(tem.get(1.0,'end'),str(date.date.today()),perinfo[0],gn))
                 tradeinfo.commit()
                 main.destroy()
             gn=purch.get('active').split()[0]
@@ -499,7 +499,7 @@ class purchasemanage():
         tk.Button(self.main,font=('times',12),text='评价',command=comment).place(x=360,y=425,width=50,height=30)
 tradeinfo=ssms.connect(host='localhost',database='tradeinfo')
 cur=tradeinfo.cursor()
-account=''
+account='00000000'
 login().main.mainloop()
 tradeinfo.close();cur.close()
 if(not account):exit(0)
