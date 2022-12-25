@@ -275,8 +275,11 @@ class marketpage():
                     notice.config(text='库存不足！')
                     return
                 cur.execute('select shipAddress from Users where account=%s',info[1])
-                ship=cur.fetchone()[0]
-                cur.execute('exec purchasing %s,%s,%s,%s,%s,%s,%s',(perinfo[0],info[0],tem,str(date.date.today()),randint(19),perinfo[8].rstrip().encode('latin1').decode('gbk'),ship.rstrip().encode('latin1').decode('gbk')))
+                ship=cur.fetchone()[0].rstrip().encode('latin1').decode('gbk')
+                try:
+                    perinfo[8]=perinfo[8].rstrip().encode('latin1').decode('gbk')
+                except:pass
+                cur.execute('exec purchasing %s,%s,%s,%s,%s,%s,%s',(perinfo[0],info[0],tem,str(date.date.today()),randint(19),perinfo[8].rstrip(),ship))
                 tradeinfo.commit()
                 main.destroy()
             gcode=goods.get('active').split()[0]
@@ -291,10 +294,48 @@ class marketpage():
             tk.Label(main,font=('times',12),anchor='e',text='购买数量').place(x=0,y=40,width=95,height=30)
             tar=tk.StringVar()
             tk.Entry(main,font=('times',12),textvariable=tar).place(x=100,y=40,width=230,height=30)
-            tk.Button(main,font=('times',12),text='确认',command=buy).place(x=340,y=40,width=50,height=30)
+            tk.Button(main,font=('times',12),text='确定',command=buy).place(x=340,y=40,width=50,height=30)
             notice=tk.Label(main,font=('times',12),anchor='w')
             notice.place(x=280,y=0,width=120,height=30)
             main.wait_window(main)
+        def view():
+            def pro():
+                ct=comt.get('active').split()[2]
+                if(ct=='赞同'):return
+                cur.execute('update Comments set agree=%s',str(int(ct)+1))
+                tradeinfo.commit()
+            def con():
+                ct=comt.get('active').split()[3]
+                if(ct=='异议'):return
+                cur.execute('update Comments set disagree=%s',str(int(ct)+1))
+                tradeinfo.commit()
+            gn=goods.get('active').split()[0]
+            if(gn=='物品编号'):return
+            main=tk.Toplevel()
+            main.title('评价')
+            main.resizable(0,0)
+            main.geometry('600x480+550+200')
+            comt=tk.Listbox(main,font=('times',14),justify='left')
+            scx=tk.Scrollbar(comt,command=comt.xview,orient='horizontal')
+            scx.pack(side='bottom',fill='x')
+            scy=tk.Scrollbar(comt,command=comt.yview)
+            scy.pack(side='right',fill='y')
+            comt.config(yscrollcommand=scy.set,xscrollcommand=scx.set)
+            cur.execute('select account,commentDate,commentContent,agree,disagree from Comments where goodsNo=%s and commentDate is not null',gn)
+            comt.insert('end','账号'+' '*18+'评价日期'+' '*15+'赞同'+' '*3+'异议'+' '*3+'评价')
+            for item in cur.fetchall():
+                comt.insert('end',item[0]+' '*11+str(item[1])+' '*14+str(item[3])+' '*8+str(item[4])+' '*10+item[2].rstrip().encode('latin1').decode('gbk'))
+            comt.place(x=0,y=0,width=600,height=400)
+            tk.Button(main,font=('times',12),text='赞同',command=pro).place(x=180,y=425,width=50,height=30)
+            tk.Button(main,font=('times',12),text='异议',command=con).place(x=330,y=425,width=50,height=30)
+        def search():
+            goods.delete(1,'end')
+            key='%'+keyword.get()+'%'
+            cur.execute('select goodsNo,account,goodsPrice,goodsName from Goods where goodsNo like %s or goodsName like %s',(key,key))
+            tem=cur.fetchall()
+            if(not tem):return
+            for item in tem:
+                goods.insert('end',item[0]+' '*8+item[1]+' '*17+str(item[2])+' '*19+item[3].rstrip().encode('latin1').decode('gbk')+' '*5)
         self.main=tk.Toplevel()
         self.main.title('市场')
         self.main.resizable(0,0)
@@ -310,7 +351,11 @@ class marketpage():
         for item in cur.fetchall():
             goods.insert('end',item[0]+' '*8+item[1]+' '*17+str(item[2])+' '*19+item[3].rstrip().encode('latin1').decode('gbk')+' '*5)
         goods.place(x=0,y=0,width=600,height=400)
-        tk.Button(self.main,font=('times',12),text='购买',command=purchase).place(x=270,y=425,width=50,height=30)
+        tk.Button(self.main,font=('times',12),text='购买',command=purchase).place(x=300,y=425,width=50,height=30)
+        tk.Button(self.main,font=('times',12),text='查看评价',command=view).place(x=400,y=425,width=100,height=30)
+        keyword=tk.StringVar()
+        tk.Entry(self.main,font=('times',12),textvariable=keyword).place(x=10,y=425,width=200,height=30)
+        tk.Button(self.main,font=('times',12),text='搜索',command=search).place(x=220,y=425,width=50,height=30)
 class sellgoods():
     def get_info(info):
         def confirm():
@@ -413,8 +458,8 @@ class purchasemanage():
             cur.execute('select * from Logistics where purchaseNo=%s',slct)
             slct=cur.fetchone()
             tk.Label(main,font=('times',12),anchor='w',text='订单编号  '+slct[0]).place(x=50,y=15,width=300,height=30)
-            tk.Label(main,font=('times',12),anchor='w',text='寄出地址  '+slct[1].rstrip().encode('latin1').decode('gbk')).place(x=50,y=50,width=300,height=30)
-            tk.Label(main,font=('times',12),anchor='w',text='收货地址  '+slct[2].rstrip().encode('latin1').decode('gbk')).place(x=50,y=85,width=300,height=30)
+            tk.Label(main,font=('times',12),anchor='w',text='寄出地址  '+slct[2].rstrip().encode('latin1').decode('gbk')).place(x=50,y=50,width=300,height=30)
+            tk.Label(main,font=('times',12),anchor='w',text='收货地址  '+slct[1].rstrip().encode('latin1').decode('gbk')).place(x=50,y=85,width=300,height=30)
             tk.Label(main,font=('times',12),anchor='w',text='物流状态  '+slct[3].rstrip().encode('latin1').decode('gbk')).place(x=50,y=120,width=300,height=30)
         def comment():
             def upd():
@@ -454,7 +499,7 @@ class purchasemanage():
         tk.Button(self.main,font=('times',12),text='评价',command=comment).place(x=360,y=425,width=50,height=30)
 tradeinfo=ssms.connect(host='localhost',database='tradeinfo')
 cur=tradeinfo.cursor()
-account='00000000'
+account=''
 login().main.mainloop()
 tradeinfo.close();cur.close()
 if(not account):exit(0)
