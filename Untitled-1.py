@@ -500,7 +500,7 @@ class purchasemanage():
 tradeinfo=ssms.connect(host='localhost',database='tradeinfo')
 cur=tradeinfo.cursor()
 account='00000000'
-login().main.mainloop()
+login().main.mainloop()#
 tradeinfo.close();cur.close()
 if(not account):exit(0)
 #
